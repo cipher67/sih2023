@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import Map from 'react-map-gl';
 import { Marker } from 'react-map-gl';
@@ -12,6 +13,7 @@ import axios from "axios"
 
 function App() {
   const [pins, setPins] = useState([])
+  const [currentPlaceId, setCurrentPlaceId] = useState(null);
   const [lng, setLng] = useState(72.877426);
   const [lat, setLat] = useState(19.076090);
   const [showPopup, setShowPopup] = useState(true);
@@ -20,7 +22,7 @@ function App() {
     const getPins = async () => {
       try {
         console.log("Fetching pins...");
-        const res = await axios.get("api/pins");
+        const res = await axios.get("/pins");
         console.log("Fetched pins:", res.data);
         setPins(res.data);
       } catch (err) {
@@ -29,7 +31,11 @@ function App() {
     };
     getPins();
   }, []);
-  
+
+  const handleMarkerClick = (id) => {
+    setCurrentPlaceId(id);
+  }
+
 
   return (
     <div className='App'>
@@ -48,34 +54,36 @@ function App() {
       >
         {pins.map(p => (
           <>
-        <Marker
-          latitude={p.lat}
-          longitude={p.lng}
-          offsetLeft={-20}
-          offsetTop={-50}
-        >
-          {showPopup && (
-            <Popup longitude={lng} latitude={lat}
-              anchor="top"
-              onClose={() => setShowPopup(false)}>
-              <div className='card'>
-                <label>Name</label>
-                <h4 className='name'>Mrunal Shinde</h4>
-                <label>Title</label>
-                <p className='desc'>Divorce Lawyer</p>
-                <label>Rating</label>
-                <div className='star'>
-                  <Star />
-                  <Star />
-                  <Star />
-                  <Star />
-                  <Star />
-                </div>
-              </div>
-            </Popup>)}
-          <Room style={{ fontSize: visualViewport.zoom * 7, color: "slateblue" }} />
-        </Marker>
-        </>
+            <Marker
+              latitude={p.lat}
+              longitude={p.lng}
+              offsetLeft={-20}
+              offsetTop={-50}
+            >
+              {p._id === currentPlaceId &&(
+               
+                <Popup longitude={p.lng} latitude={p.lat}
+                  anchor="top"
+                  onClose={() => setShowPopup(false)}>
+                  <div className='card'>
+                    <label>Name</label>
+                    <h4 className='name'>{p.name}</h4>
+                    <label>Title</label>
+                    <p className='desc'>{p.title}</p>
+                    <label>Rating</label>
+                       <div className="star">
+              {Array.from({ length: p.rating }).map((_, index) => (
+                <Star key={index} />
+              ))}
+            </div>
+                  </div>
+                </Popup>)
+              }
+              <Room style={{ fontSize: visualViewport.zoom * 7, color: "slateblue",cursor:"pointer" }}
+                onClick={() => handleMarkerClick(p._id)}
+              />
+            </Marker>
+          </>
         ))}
         <FullscreenControl />
       </Map>
